@@ -140,8 +140,8 @@ class CrosswordCreator():
         False if no revision was made.
         """
         # print('revise method starting!')
-        # print(x)
-        # print(y)
+        print(x)
+        print(y)
         startd = len(self.domains[x])
         for i in self.domains[x].copy():
             if not self.checkfit(i, y):
@@ -149,7 +149,7 @@ class CrosswordCreator():
                 self.domains[x].remove(i)
         endd = len(self.domains[x])
         dd = startd - endd
-        # print('Changed domoain of x by : ' + str(dd) + ' items')
+        print('Changed domoain of x by : ' + str(dd) + ' items')
         # print(self.crossword.overlaps)
         # # for i in self
         # print('x domain:')
@@ -192,20 +192,19 @@ class CrosswordCreator():
         if arcs == None: 
             print('no initial list')
             q = list(self.crossword.overlaps)
-            # for i in q:
-            #     print(i) 
+            for i in q:
+                print(i) 
         else: q = arcs
         while len(q) > 0:
             c = q.pop(0)
             # print(c)
             if self.revise(c[0], c[1]):
-                print("...")
-                # if len(c)
-            # k = self.domains.keys()
-            # for i in k:
-            #     print(i)
-            #     v = self.domains[i]
-            #     print(v)
+                if len(self.domains[c]) == 0: return false
+                for n in self.crossword.neighbors(c):
+                    q.append(n)
+                
+        return True
+
 
 
     def assignment_complete(self, assignment):
@@ -276,6 +275,9 @@ class CrosswordCreator():
         for i in self.order_domain_values(v, assignment):
             print(i)
             assignment[v] = i
+            self.ac3()
+            if self.consistent(assignment):
+                return self.backtrack(assignment)
 
         return assignment
 
