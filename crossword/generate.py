@@ -112,54 +112,65 @@ class CrosswordCreator():
             print(self.domains.get(i))
 
 
-    # def checkfit(self, var, y, xx, yy):
-    #     # print('checkfit')
-    #     # print('var: ' + var)
-    #     r = False
-    #     for w in self.domains[y]:
-    #         print(str(var[xx]) + ' ' + str(w[yy]))
-    #         if var[xx] == w[yy]: r = True
-                    
-    #     return r
-
     def checkfit(self, var, y, xx, yy):
         # print('checkfit')
         # print('var: ' + var)
         r = False
         for w in self.domains[y]:
-               # print(w)
-            for l in w:
-                # print(l)
-                for i in var: 
-                    if i == l: r = True
+            print(str(var[xx]) + ' ' + str(w[yy]))
+            if var[xx] == w[yy]: 
+                r = True
+                return r
                     
         return r
+
+    # def checkfit(self, var, y, xx, yy):
+    #     # print('checkfit')
+    #     # print('var: ' + var)
+    #     r = False
+    #     for w in self.domains[y]:
+    #            # print(w)
+    #         for l in w:
+    #             # print(l)
+    #             for i in var: 
+    #                 if i == l: r = True
+                    
+    #     return r
          
 
         # return True
 
     def findcross(self, a, b):
         # find the intersection between 2 variables
-        x = -1
-        y = -1
-        if a == b : return x, y
+        # x = -1
+        # y = -1
+        # if a == b : return x, y
 
-        if a.direction == b.direction: return x, y
+        # if a.direction == b.direction: return x, y
 
-        # check for the same start point.
-        if a.i == b.i and a.j == b.j: return a.i, a.j
+        # # check for the same start point.
+        # if a.i == b.i and a.j == b.j: return a.i, a.j
 
         # if a.direction == 'across':
-        #     if a.i +a.length < b.i: return x, y
-        # elif a.j + a.length < b.j: return x, y
-        x = a.i 
-        y = b.j
-        print(x)
-        print(y)
-        if a.direction == 'down':
-            print('swap?')
-            x = a.j
-            y = b.i
+        #     if a.i + a.length < b.i: return x, y
+        # elif b.i + b.length < a.i: return x, y
+        # x = a.i 
+        # y = b.j
+        # print(x)
+        # print(y)
+        # if a.direction == 'down':
+        #     print('swap?')
+        #     x = a.j
+        #     y = b.i
+
+        if a.direction == 'across':
+            x = a.i-1
+            y = b.j-1
+        else:
+            x = a.j-1
+            y = b.i-1
+
+        print(a , b, 'cross at: ', str(x), str(y))
 
         return x, y
 
@@ -176,8 +187,13 @@ class CrosswordCreator():
         # print('revise method starting!')
         print(x)
         print(y)
+        n = self.crossword.neighbors(x)
+        print(n)
+        if y not in n: return False
+
         xx, yy = self.findcross(x, y)
-        if xx == -1 and yy == -1: return
+        if xx == -1 and yy == -1: return False
+        if xx >= x.length or yy >= y.length: return False
 
         startd = len(self.domains[x])
         for i in self.domains[x].copy():
@@ -187,6 +203,7 @@ class CrosswordCreator():
         endd = len(self.domains[x])
         dd = startd - endd
         print('Changed domoain of x by : ' + str(dd) + ' items')
+        return dd > 0
         # print(self.crossword.overlaps)
         # # for i in self
         # print('x domain:')
@@ -236,8 +253,8 @@ class CrosswordCreator():
             c = q.pop(0)
             # print(c)
             if self.revise(c[0], c[1]):
-                if len(self.domains[c]) == 0: return false
-                for n in self.crossword.neighbors(c):
+                if len(self.domains[c[0]]) == 0: return False
+                for n in self.crossword.neighbors(c[0]):
                     q.append(n)
                 
         return True
@@ -261,9 +278,9 @@ class CrosswordCreator():
         Return True if `assignment` is consistent (i.e., words fit in crossword
         puzzle without conflicting characters); return False otherwise.
         """
-        print(len(assignment.values()))
-        print(len(set(assignment.values())))
-        return True
+        a = len(assignment.values())
+        s = len(set(assignment.values()))
+        return a == s
 
     def order_domain_values(self, var, assignment):
         """
@@ -315,11 +332,12 @@ class CrosswordCreator():
         print(v)
         for i in self.order_domain_values(v, assignment):
             print(i)
-            if i not in assignment.values():
-                assignment[v] = i
-                self.ac3()
-                if self.consistent(assignment):
-                    return self.backtrack(assignment)
+            
+            assignment[v] = i
+            # self.ac3()
+            if  not self.consistent(assignment):
+                assignment.pop(v, None)
+                return self.backtrack(assignment)
 
         return assignment
 
