@@ -112,23 +112,57 @@ class CrosswordCreator():
             print(self.domains.get(i))
 
 
-    def checkfit(self, var, y):
+    # def checkfit(self, var, y, xx, yy):
+    #     # print('checkfit')
+    #     # print('var: ' + var)
+    #     r = False
+    #     for w in self.domains[y]:
+    #         print(str(var[xx]) + ' ' + str(w[yy]))
+    #         if var[xx] == w[yy]: r = True
+                    
+    #     return r
+
+    def checkfit(self, var, y, xx, yy):
         # print('checkfit')
         # print('var: ' + var)
         r = False
         for w in self.domains[y]:
-            # print(w)
+               # print(w)
             for l in w:
                 # print(l)
-                for k in var:
-                    if k == l:
-                        r = True
-                        # print('found matching letter: ' + k + ' ' + l)
-                        return r
+                for i in var: 
+                    if i == l: r = True
                     
         return r
+         
 
         # return True
+
+    def findcross(self, a, b):
+        # find the intersection between 2 variables
+        x = -1
+        y = -1
+        if a == b : return x, y
+
+        if a.direction == b.direction: return x, y
+
+        # check for the same start point.
+        if a.i == b.i and a.j == b.j: return a.i, a.j
+
+        # if a.direction == 'across':
+        #     if a.i +a.length < b.i: return x, y
+        # elif a.j + a.length < b.j: return x, y
+        x = a.i 
+        y = b.j
+        print(x)
+        print(y)
+        if a.direction == 'down':
+            print('swap?')
+            x = a.j
+            y = b.i
+
+        return x, y
+
 
     def revise(self, x, y):
         """
@@ -142,9 +176,12 @@ class CrosswordCreator():
         # print('revise method starting!')
         print(x)
         print(y)
+        xx, yy = self.findcross(x, y)
+        if xx == -1 and yy == -1: return
+
         startd = len(self.domains[x])
         for i in self.domains[x].copy():
-            if not self.checkfit(i, y):
+            if not self.checkfit(i, y, xx, yy):
                 print('found conflict')
                 self.domains[x].remove(i)
         endd = len(self.domains[x])
@@ -192,8 +229,8 @@ class CrosswordCreator():
         if arcs == None: 
             print('no initial list')
             q = list(self.crossword.overlaps)
-            for i in q:
-                print(i) 
+            # for i in q:
+                # print(i) 
         else: q = arcs
         while len(q) > 0:
             c = q.pop(0)
@@ -224,6 +261,8 @@ class CrosswordCreator():
         Return True if `assignment` is consistent (i.e., words fit in crossword
         puzzle without conflicting characters); return False otherwise.
         """
+        print(len(assignment.values()))
+        print(len(set(assignment.values())))
         return True
 
     def order_domain_values(self, var, assignment):
@@ -236,6 +275,8 @@ class CrosswordCreator():
 
         print("order_domain_values")
         # //just return some values for now
+        n = self.crossword.neighbors(var)
+        print(n)
         r = self.domains[var]
         print(r)
         return r
@@ -274,10 +315,11 @@ class CrosswordCreator():
         print(v)
         for i in self.order_domain_values(v, assignment):
             print(i)
-            assignment[v] = i
-            self.ac3()
-            if self.consistent(assignment):
-                return self.backtrack(assignment)
+            if i not in assignment.values():
+                assignment[v] = i
+                self.ac3()
+                if self.consistent(assignment):
+                    return self.backtrack(assignment)
 
         return assignment
 
