@@ -112,6 +112,24 @@ class CrosswordCreator():
             print(self.domains.get(i))
 
 
+    def checkfit(self, var, y):
+        # print('checkfit')
+        # print('var: ' + var)
+        r = False
+        for w in self.domains[y]:
+            # print(w)
+            for l in w:
+                # print(l)
+                for k in var:
+                    if k == l:
+                        r = True
+                        # print('found matching letter: ' + k + ' ' + l)
+                        return r
+                    
+        return r
+
+        # return True
+
     def revise(self, x, y):
         """
         Make variable `x` arc consistent with variable `y`.
@@ -121,9 +139,17 @@ class CrosswordCreator():
         Return True if a revision was made to the domain of `x`; return
         False if no revision was made.
         """
-        print('revise method starting!')
-        print(x)
-        print(y)
+        # print('revise method starting!')
+        # print(x)
+        # print(y)
+        startd = len(self.domains[x])
+        for i in self.domains[x].copy():
+            if not self.checkfit(i, y):
+                print('found conflict')
+                self.domains[x].remove(i)
+        endd = len(self.domains[x])
+        dd = startd - endd
+        # print('Changed domoain of x by : ' + str(dd) + ' items')
         # print(self.crossword.overlaps)
         # # for i in self
         # print('x domain:')
@@ -241,12 +267,34 @@ class CrosswordCreator():
         If no assignment is possible, return None.
         """
         print('backtrack starting...')
-        u = self.select_unassigned_variable(assignment)
-        print(u)
         ac = self.assignment_complete(assignment)
-        print(ac)
-        self.order_domain_values(list(self.domains.keys())[0], assignment)
+        print('Assigment complete: ' + str(ac))
+        if ac: return assignment
 
+        v = self.select_unassigned_variable(assignment)
+        print(v)
+        for i in self.order_domain_values(v, assignment):
+            print(i)
+            assignment[v] = i
+
+        return assignment
+
+    '''
+    backtacking psudocode from textbook p192.
+
+    function BACKTRACKING-SEARCH(csp) 
+    returns a solution or failure return BACKTRACK(csp,{})
+
+    function BACKTRACK(csp, assignment) returns a solution or failure
+    if assignment is complete then return assignment
+    var ← SELECT-UNASSIGNED-VARIABLE(csp, assignment)
+    for each value in ORDER-DOMAIN-VALUES(csp, var, assignment) do
+        if value is consistent with assignment then
+            add {var = value} to assignment inferences←INFERENCE(csp,var,assignment) if inferences ̸= failure then
+            add inferences to csp result←BACKTRACK(csp,assignment) if result ̸= failure then return result 
+            remove inferences from csp
+        remove {var = value} from assignment return failure
+    '''
 
 def main():
 
