@@ -112,67 +112,33 @@ class CrosswordCreator():
             print(self.domains.get(i))
 
 
-    def checkfit(self, var, y, xx, yy):
+    def checkfit(self, var, y, c):
         # print('checkfit')
         # print('var: ' + var)
         r = False
         for w in self.domains[y]:
-            print(str(var[xx]) + ' ' + str(w[yy]))
-            if var[xx] == w[yy]: 
+            print(var, w, str(var[c[0]]) + ' ' + str(w[c[1]]))
+            if var[c[0]] == w[c[1]]: 
                 r = True
                 return r
                     
         return r
 
-    # def checkfit(self, var, y, xx, yy):
-    #     # print('checkfit')
-    #     # print('var: ' + var)
-    #     r = False
-    #     for w in self.domains[y]:
-    #            # print(w)
-    #         for l in w:
-    #             # print(l)
-    #             for i in var: 
-    #                 if i == l: r = True
-                    
-    #     return r
-         
-
-        # return True
 
     def findcross(self, a, b):
         # find the intersection between 2 variables
-        # x = -1
-        # y = -1
-        # if a == b : return x, y
+        print('cross', a, b)
+        if a == b : return None
 
-        # if a.direction == b.direction: return x, y
+        if a.direction == b.direction: return None
 
-        # # check for the same start point.
-        # if a.i == b.i and a.j == b.j: return a.i, a.j
+        for i in range(len(a.cells)):
+            if a.cells[i] in b.cells:
+                k = b.cells.index(a.cells[i])
+                print('cross at: ', a.cells[i], i, k)
+                return (i, k)
 
-        # if a.direction == 'across':
-        #     if a.i + a.length < b.i: return x, y
-        # elif b.i + b.length < a.i: return x, y
-        # x = a.i 
-        # y = b.j
-        # print(x)
-        # print(y)
-        # if a.direction == 'down':
-        #     print('swap?')
-        #     x = a.j
-        #     y = b.i
-
-        if a.direction == 'across':
-            x = a.i-1
-            y = b.j-1
-        else:
-            x = a.j-1
-            y = b.i-1
-
-        print(a , b, 'cross at: ', str(x), str(y))
-
-        return x, y
+        return  None
 
 
     def revise(self, x, y):
@@ -185,19 +151,18 @@ class CrosswordCreator():
         False if no revision was made.
         """
         # print('revise method starting!')
-        print(x)
-        print(y)
+        # print(x)
+        # print(y)
         n = self.crossword.neighbors(x)
-        print(n)
-        if y not in n: return False
+        # print(n)
+        # if y not in n: return False
 
-        xx, yy = self.findcross(x, y)
-        if xx == -1 and yy == -1: return False
-        if xx >= x.length or yy >= y.length: return False
+        c = self.findcross(x, y)
+        if c == None: return False 
 
         startd = len(self.domains[x])
         for i in self.domains[x].copy():
-            if not self.checkfit(i, y, xx, yy):
+            if not self.checkfit(i, y, c):
                 print('found conflict')
                 self.domains[x].remove(i)
         endd = len(self.domains[x])
@@ -246,16 +211,17 @@ class CrosswordCreator():
         if arcs == None: 
             print('no initial list')
             q = list(self.crossword.overlaps)
-            # for i in q:
-                # print(i) 
-        else: q = arcs
+          
+        else: q = arcs  
+        for i in q:
+                print(i) 
         while len(q) > 0:
             c = q.pop(0)
-            # print(c)
+            print(c)
             if self.revise(c[0], c[1]):
                 if len(self.domains[c[0]]) == 0: return False
                 for n in self.crossword.neighbors(c[0]):
-                    q.append(n)
+                    q.append((c[0], n))
                 
         return True
 
@@ -308,11 +274,16 @@ class CrosswordCreator():
         """
         print("select_unassigned_variable")
         k = self.domains.keys()
+        u = {}
         for i in k:
             if i not in assignment.keys():
-                return i
+                u[i] = len(self.domains[i])
+        su = sorted(u.items(), key=lambda item: item[1])
 
-        return None
+        print(su)
+
+
+        return su[0][0]
 
     def backtrack(self, assignment):
         """
@@ -329,17 +300,23 @@ class CrosswordCreator():
         if ac: return assignment
 
         v = self.select_unassigned_variable(assignment)
-        print(v)
+        print(v) 
         for i in self.order_domain_values(v, assignment):
             print(i)
             
-            assignment[v] = i
-            # self.ac3()
-            if  not self.consistent(assignment):
-                assignment.pop(v, None)
-                return self.backtrack(assignment)
+            if self.consistent(assignment):
+                assignment[v] = i
+                n = self.crossword.neighbors(v)
+                nn = []
+                for k in n:
+                    nn.append( (k, v) )
+                if self.ac3( nn ):
+                    res = self.backtrack(assignment)
+                    if res != None: return res
 
-        return assignment
+                assignment.pop(v, None)
+
+        return None
 
     '''
     backtacking psudocode from textbook p192.
@@ -352,10 +329,15 @@ class CrosswordCreator():
     var ← SELECT-UNASSIGNED-VARIABLE(csp, assignment)
     for each value in ORDER-DOMAIN-VALUES(csp, var, assignment) do
         if value is consistent with assignment then
-            add {var = value} to assignment inferences←INFERENCE(csp,var,assignment) if inferences ̸= failure then
-            add inferences to csp result←BACKTRACK(csp,assignment) if result ̸= failure then return result 
-            remove inferences from csp
-        remove {var = value} from assignment return failure
+            add {var = value} to assignment 
+            inferences←INFERENCE(csp,var,assignment) 
+            if inferences ̸= failure then
+                add inferences to csp
+                result←BACKTRACK(csp,assignment) 
+                if result ̸= failure then return result 
+                remove inferences from csp
+            remove {var = value} from assignment 
+        return failure
     '''
 
 def main():
