@@ -297,8 +297,10 @@ class CrosswordCreator():
         """
         print('backtrack starting...')
         ac = self.assignment_complete(assignment)
+        acc = self.consistent(assignment)
         print('Assigment complete: ' + str(ac))
-        if ac: return assignment
+        print('Assigment consistent:', acc)
+        if ac and acc: return assignment
 
         v = self.select_unassigned_variable(assignment)
         print(v) 
@@ -311,11 +313,13 @@ class CrosswordCreator():
                 nn = []
                 for k in n:
                     nn.append( (k, v) )
+                d = self.domains.copy()
                 if self.ac3( nn ):
                     res = self.backtrack(assignment)
                     if res != None: return res
 
                 assignment.pop(v, None)
+                self.domains = d
 
         return None
 
