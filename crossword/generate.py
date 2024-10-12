@@ -130,7 +130,7 @@ class CrosswordCreator():
         print('cross', a, b)
         if a == b : return None
 
-        if a.direction == b.direction: return None
+        # if a.direction == b.direction: return None
 
         for i in range(len(a.cells)):
             if a.cells[i] in b.cells:
@@ -246,6 +246,7 @@ class CrosswordCreator():
         """
         a = len(assignment.values())
         s = len(set(assignment.values()))
+        print('consistent check: ', a, s)
         return a == s
 
     def order_domain_values(self, var, assignment):
@@ -255,7 +256,7 @@ class CrosswordCreator():
         The first value in the list, for example, should be the one
         that rules out the fewest values among the neighbors of `var`.
         """
-
+        # working without this fully implemented? #fails structure2
         print("order_domain_values")
         # //just return some values for now
         n = self.crossword.neighbors(var)
@@ -304,8 +305,8 @@ class CrosswordCreator():
         for i in self.order_domain_values(v, assignment):
             print(i)
             
+            assignment[v] = i
             if self.consistent(assignment):
-                assignment[v] = i
                 n = self.crossword.neighbors(v)
                 nn = []
                 for k in n:
