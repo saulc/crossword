@@ -5,7 +5,9 @@ from crossword import *
 '''
     Cs4660 Ai. Fall 2024
     Saul Castro 10/12/24
-
+    
+    structure 1 and word set 2 work well.
+    python generate.py data/structure1.txt data/words2.txt output.png
 '''
 
 class CrosswordCreator():
@@ -255,8 +257,27 @@ class CrosswordCreator():
         """
         a = len(assignment.values())
         s = len(set(assignment.values()))
+        if a != s: 
+            print('Assigment not unique.')
+            return False
+
+        # implicet check if the assignment conflits with its neighbors
+        # structure1 words1 works without this check?
+        for i in assignment.keys():
+            # print(i)
+            for n in self.crossword.neighbors(i):
+                if n in assignment.keys():
+                    # print('checking neighbors fit')
+                    c = self.findcross(i,n)
+                    # print('found cross',c)
+                    if c != None:
+                        a = assignment[i][c[0]]
+                        b = assignment[n][c[1]]
+                        # print(a, b)
+                        if a != b: return False
         # print('consistent check: ', a, s)
-        return a == s
+        # no conflicts were found, assignment is consistent.
+        return True
 
     def order_domain_values(self, var, assignment):
         """
@@ -333,6 +354,7 @@ class CrosswordCreator():
             print('Assigning value: ', i)
             
             assignment[v] = i
+            d = {}
             if self.consistent(assignment):
                 # n = self.crossword.neighbors(v)
                 # nn = []
@@ -341,11 +363,16 @@ class CrosswordCreator():
                 nn = [ (k,v) for k in self.crossword.neighbors(v) ]
                 d = self.domains.copy()
                 if self.ac3( nn ):
+                    print('ac3 passed.')
                     res = self.backtrack(assignment)
                     if res != None: return res
-
-                assignment.pop(v, None)
-                self.domains = d
+                else:
+                    print('ac3 failed: revert domain')
+                    self.domains = d
+            else: print('assignment not consistent')
+            print('reverting assignment.')
+            assignment.pop(v, None)
+           
 
         return None
 
