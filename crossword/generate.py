@@ -14,6 +14,9 @@ class CrosswordCreator():
             var: self.crossword.words.copy()
             for var in self.crossword.variables
         }
+        # to return order_domain_values
+        self.odv = {}
+
 
     def letter_grid(self, assignment):
         """
@@ -102,22 +105,23 @@ class CrosswordCreator():
         # print(self.domains)
         k = self.domains.keys()
         for i in k:
-            print(i)
+            # print(i)
             # l = type(i)
             l = i.length
-            print(l)
+            # print(l)
             words = self.domains.get(i)
             for w in self.domains.get(i).copy():
                 if len(w) != l: words.remove(w)
-            print(self.domains.get(i))
+            # print(self.domains.get(i))
 
 
+    # check if value var overlaps with domain of y at point c
     def checkfit(self, var, y, c):
         # print('checkfit')
         # print('var: ' + var)
         r = False
         for w in self.domains[y]:
-            print(var, w, str(var[c[0]]) + ' ' + str(w[c[1]]))
+            # print(var, w, str(var[c[0]]) + ' ' + str(w[c[1]]))
             if var[c[0]] == w[c[1]]: 
                 r = True
                 return r
@@ -127,15 +131,15 @@ class CrosswordCreator():
 
     def findcross(self, a, b):
         # find the intersection between 2 variables
-        print('cross', a, b)
+        # print('cross', a, b)
         if a == b : return None
 
         # if a.direction == b.direction: return None
-
+        # use variable cells to find overlap if any and convert to indexes.
         for i in range(len(a.cells)):
             if a.cells[i] in b.cells:
                 k = b.cells.index(a.cells[i])
-                print('cross at: ', a.cells[i], i, k)
+                # print('cross at: ', a.cells[i], i, k)
                 return (i, k)
 
         return  None
@@ -159,22 +163,21 @@ class CrosswordCreator():
 
         c = self.findcross(x, y)
         if c == None: return False 
-
+        r = 0
         startd = len(self.domains[x])
         for i in self.domains[x].copy():
             if not self.checkfit(i, y, c):
-                print('found conflict')
+                # print('found conflict')
                 self.domains[x].remove(i)
+                r = i
         endd = len(self.domains[x])
         dd = startd - endd
-        print('Changed domoain of x by : ' + str(dd) + ' items')
+        if r != 0:
+            self.odv[(x, r)] = dd
+        # print('Changed domain of x by : ' + str(dd) + ' items')
+        
         return dd > 0
-        # print(self.crossword.overlaps)
-        # # for i in self
-        # print('x domain:')
-        # print(self.domains[x])
-        # print('y domain:')
-        # print(self.domains[y])
+
 
     '''
     ac3 and revise psudo code from page 187 of the textbook.
@@ -206,18 +209,18 @@ class CrosswordCreator():
         Return True if arc consistency is enforced and no domains are empty;
         return False if one or more domains end up empty.
         """
-        print('ac3 starting.')
+        # print('ac3 starting.')
         q = []
         if arcs == None: 
-            print('no initial list')
+            # print('no initial list')
             q = list(self.crossword.overlaps)
-          
         else: q = arcs  
-        for i in q:
-                print(i) 
+
+        # for i in q:
+        #         print(i) 
         while len(q) > 0:
             c = q.pop(0)
-            print(c)
+            # print(c)
             if self.revise(c[0], c[1]):
                 if len(self.domains[c[0]]) == 0: return False
                 for n in self.crossword.neighbors(c[0]):
@@ -246,7 +249,7 @@ class CrosswordCreator():
         """
         a = len(assignment.values())
         s = len(set(assignment.values()))
-        print('consistent check: ', a, s)
+        # print('consistent check: ', a, s)
         return a == s
 
     def order_domain_values(self, var, assignment):
@@ -257,13 +260,28 @@ class CrosswordCreator():
         that rules out the fewest values among the neighbors of `var`.
         """
         # working without this fully implemented? #fails structure2
-        print("order_domain_values")
+        # print("order_domain_values")
         # //just return some values for now
-        n = self.crossword.neighbors(var)
-        print(n)
-        r = self.domains[var]
-        print(r)
-        return r
+        # n = self.crossword.neighbors(var)
+        # print(n)
+        o = self.odv
+        s = {}
+        # print(var)
+        # print(o)
+        r = self.domains[var].copy()
+        for i in r:
+            if((var,i)) in o.keys():
+                # print( o[ (var, i ) ] )
+                s[(var, i)] = o[ (var, i) ]
+            s[(var,i)] = 0
+        s = sorted(s.items(), key= lambda item: item[1])
+        t = []
+        for i in s:
+            # print(i[0][1])
+            t.append(i[0][1])
+
+        # print(t)
+        return t
 
     def select_unassigned_variable(self, assignment):
         """
@@ -273,7 +291,7 @@ class CrosswordCreator():
         degree. If there is a tie, any of the tied variables are acceptable
         return values.
         """
-        print("select_unassigned_variable")
+        # print("select_unassigned_variable")
         k = self.domains.keys()
         u = {}
         for i in k:
@@ -281,7 +299,7 @@ class CrosswordCreator():
                 u[i] = len(self.domains[i])
         su = sorted(u.items(), key=lambda item: item[1])
 
-        print(su)
+        # print(su)
 
 
         return su[0][0]
@@ -303,9 +321,9 @@ class CrosswordCreator():
         if ac and acc: return assignment
 
         v = self.select_unassigned_variable(assignment)
-        print(v) 
+        # print(v) 
         for i in self.order_domain_values(v, assignment):
-            print(i)
+            # print(i)
             
             assignment[v] = i
             if self.consistent(assignment):
