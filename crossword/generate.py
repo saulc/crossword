@@ -2,6 +2,11 @@ import sys
 
 from crossword import *
 
+'''
+    Cs4660 Ai. Fall 2024
+    Saul Castro 10/12/24
+
+'''
 
 class CrosswordCreator():
 
@@ -169,11 +174,12 @@ class CrosswordCreator():
             if not self.checkfit(i, y, c):
                 # print('found conflict')
                 self.domains[x].remove(i)
-                r = i
+            r = i
         endd = len(self.domains[x])
         dd = startd - endd
         if r != 0:
             self.odv[(x, r)] = dd
+        else: self.odv[(x, r)] = 0
         # print('Changed domain of x by : ' + str(dd) + ' items')
         
         return dd > 0
@@ -271,14 +277,12 @@ class CrosswordCreator():
         r = self.domains[var].copy()
         for i in r:
             if((var,i)) in o.keys():
-                # print( o[ (var, i ) ] )
+                # print( i, o[ (var, i ) ] )
                 s[(var, i)] = o[ (var, i) ]
-            s[(var,i)] = 0
+            else: s[(var,i)] = 0
         s = sorted(s.items(), key= lambda item: item[1])
-        t = []
-        for i in s:
-            # print(i[0][1])
-            t.append(i[0][1])
+        # print(s)
+        t = [ i[0][1] for i in s]
 
         # print(t)
         return t
@@ -297,11 +301,10 @@ class CrosswordCreator():
         for i in k:
             if i not in assignment.keys():
                 u[i] = len(self.domains[i])
+        if len(u) < 1: return None
+        # print(u)
         su = sorted(u.items(), key=lambda item: item[1])
-
         # print(su)
-
-
         return su[0][0]
 
     def backtrack(self, assignment):
@@ -318,19 +321,24 @@ class CrosswordCreator():
         acc = self.consistent(assignment)
         print('Assigment complete: ' + str(ac))
         print('Assigment consistent:', acc)
-        if ac and acc: return assignment
+        if ac and acc: 
+            print('Final Assigment.')
+            for k in assignment.keys():
+                print(k, assignment[k])
+            return assignment
 
         v = self.select_unassigned_variable(assignment)
         # print(v) 
         for i in self.order_domain_values(v, assignment):
-            # print(i)
+            print('Assigning value: ', i)
             
             assignment[v] = i
             if self.consistent(assignment):
-                n = self.crossword.neighbors(v)
-                nn = []
-                for k in n:
-                    nn.append( (k, v) )
+                # n = self.crossword.neighbors(v)
+                # nn = []
+                # for k in n:
+                #     nn.append( (k, v) )
+                nn = [ (k,v) for k in self.crossword.neighbors(v) ]
                 d = self.domains.copy()
                 if self.ac3( nn ):
                     res = self.backtrack(assignment)
